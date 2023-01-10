@@ -18,6 +18,10 @@ public class LevelEditor : MonoBehaviour
     private TilePrefabLookup _lookup;
     [SerializeField]
     private TMP_InputField _levelNameInput;
+    [SerializeField]
+    private GameObject _mainEditorCanvas;
+    [SerializeField]
+    private GameObject _minimizedEditorCanvas;
 
     private LevelData _levelData;
     private List<LevelEditorTile> _generatedTiles;
@@ -26,6 +30,7 @@ public class LevelEditor : MonoBehaviour
     private int _currentY;
     private int _currentZ;
     private BlockType _currentBlockType;
+    private bool _minimized;
     
     void Start()
     {
@@ -45,6 +50,7 @@ public class LevelEditor : MonoBehaviour
         ProcessCursorMovement();
         ProcessBlockPlacement();
         ProcessSaveLevel();
+        ProcessMinimize();
     }
 
     private void ProcessCycleBlockType()
@@ -126,6 +132,28 @@ public class LevelEditor : MonoBehaviour
     {
         if (Input.GetKeyUp(KeyCode.Z))
             SaveLevel();
+    }
+
+    private void ProcessMinimize()
+    {
+        if (Input.GetKeyUp(KeyCode.R))
+            ToggleMinimize();
+    }
+
+    private void ToggleMinimize()
+    {
+        if (_minimized)
+        {
+            _mainEditorCanvas.SetActive(true);
+            _minimizedEditorCanvas.SetActive(false);
+        }
+        else
+        {
+            _mainEditorCanvas.SetActive(false);
+            _minimizedEditorCanvas.SetActive(true);
+        }
+
+        _minimized = !_minimized;
     }
 
     private void SetTile()
