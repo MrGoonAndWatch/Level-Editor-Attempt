@@ -5,6 +5,7 @@ using System.Linq;
 using Newtonsoft.Json;
 using TMPro;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class LevelEditor : MonoBehaviour
 {
@@ -22,6 +23,18 @@ public class LevelEditor : MonoBehaviour
     private GameObject _mainEditorCanvas;
     [SerializeField]
     private GameObject _minimizedEditorCanvas;
+    [SerializeField]
+    private LevelEditorControls _editorControls;
+
+    private InputAction _moveXZ;
+    private InputAction _moveUp;
+    private InputAction _moveDown;
+    private InputAction _cycleTileForwards;
+    private InputAction _cycleTileBackwards;
+    private InputAction _placeTile;
+    private InputAction _saveLevel;
+    private InputAction _minimizeUi;
+
 
     private LevelData _levelData;
     private List<LevelEditorTile> _generatedTiles;
@@ -31,6 +44,53 @@ public class LevelEditor : MonoBehaviour
     private int _currentZ;
     private BlockType _currentBlockType;
     private bool _minimized;
+
+    void Awake()
+    {
+        _editorControls = new LevelEditorControls();
+    }
+
+    void OnEnable()
+    {
+        _moveXZ = _editorControls.Player.MoveXZ;
+        _moveUp = _editorControls.Player.MoveUp;
+        _moveDown = _editorControls.Player.MoveDown;
+        _cycleTileForwards = _editorControls.Player.CycleTileForwards;
+        _cycleTileBackwards = _editorControls.Player.CycleTileBackwards;
+        _placeTile = _editorControls.Player.PlaceTile;
+        _saveLevel = _editorControls.Player.SaveLevel;
+        _minimizeUi = _editorControls.Player.MinimizeUi;
+
+        _moveXZ.Enable();
+        _moveUp.Enable();
+        _moveDown.Enable();
+        _cycleTileForwards.Enable();
+        _cycleTileBackwards.Enable();
+        _placeTile.Enable();
+        _saveLevel.Enable();
+        _minimizeUi.Enable();
+
+        _moveXZ.performed += OnMoveCursor;
+        _moveUp.performed += OnMoveCursorUp;
+        _moveDown.performed += OnMoveCursorDown;
+        _cycleTileForwards.performed += OnCycleTileForward;
+        _cycleTileBackwards.performed += OnCycleTileBackwards;
+        _placeTile.performed += OnPlaceBlock;
+        _saveLevel.performed += OnSaveLevel;
+        _minimizeUi.performed += OnMinimize;
+    }
+
+    void OnDisable()
+    {
+        _moveXZ.Disable();
+        _moveUp.Disable();
+        _moveDown.Disable();
+        _cycleTileForwards.Disable();
+        _cycleTileBackwards.Disable();
+        _placeTile.Disable();
+        _saveLevel.Disable();
+        _minimizeUi.Disable();
+    }
     
     void Start()
     {
@@ -42,44 +102,6 @@ public class LevelEditor : MonoBehaviour
         };
         UpdateBlockTypeDisplay();
         UpdateCursor();
-    }
-    
-    void Update()
-    {
-        ProcessCycleBlockType();
-        ProcessCursorMovement();
-        ProcessBlockPlacement();
-        ProcessSaveLevel();
-        ProcessMinimize();
-    }
-
-    private void ProcessCycleBlockType()
-    {
-        if (Input.GetKeyUp(KeyCode.LeftArrow))
-            CycleBlockBackwards();
-        else if (Input.GetKeyUp(KeyCode.RightArrow))
-            CycleBlockForward();
-    }
-
-    private void ProcessCursorMovement()
-    {
-        if (Input.GetKeyUp(KeyCode.W))
-            MoveCursorForwards();
-
-        if (Input.GetKeyUp(KeyCode.S))
-            MoveCursorBackwards();
-
-        if (Input.GetKeyUp(KeyCode.A))
-            MoveCursorLeft();
-
-        if (Input.GetKeyUp(KeyCode.D))
-            MoveCursorRight();
-
-        if (Input.GetKeyUp(KeyCode.Q))
-            MoveCursorUp();
-
-        if (Input.GetKeyUp(KeyCode.E))
-            MoveCursorDown();
     }
 
     private void MoveCursorForwards()
@@ -120,24 +142,6 @@ public class LevelEditor : MonoBehaviour
     private void UpdateCursor()
     {
         _cursor.position = new Vector3(_currentX, _currentY, _currentZ);
-    }
-
-    private void ProcessBlockPlacement()
-    {
-        if (Input.GetKeyUp(KeyCode.F))
-            SetTile();
-    }
-
-    private void ProcessSaveLevel()
-    {
-        if (Input.GetKeyUp(KeyCode.Z))
-            SaveLevel();
-    }
-
-    private void ProcessMinimize()
-    {
-        if (Input.GetKeyUp(KeyCode.R))
-            ToggleMinimize();
     }
 
     private void ToggleMinimize()
@@ -260,5 +264,53 @@ public class LevelEditor : MonoBehaviour
             var levelDataJson = JsonConvert.SerializeObject(_levelData, Formatting.None);
             File.WriteAllText(filePath, levelDataJson);
         }
+    }
+
+    private void OnMoveCursor(InputAction.CallbackContext context)
+    {
+        var moveDir = context.ReadValue<Vector2>();
+        if(moveDir.x > 0)
+            MoveCursorRight();
+        else if(moveDir.x < 0)
+            MoveCursorLeft();
+        if(moveDir.y > 0)
+            MoveCursorForwards();
+        else if(moveDir.y < 0)
+            MoveCursorBackwards();
+    }
+
+    private void OnMoveCursorUp(InputAction.CallbackContext context)
+    {
+        MoveCursorUp();
+    }
+
+    private void OnMoveCursorDown(InputAction.CallbackContext context)
+    {
+        MoveCursorDown();
+    }
+
+    private void OnCycleTileForward(InputAction.CallbackContext context)
+    {
+        CycleBlockForward();
+    }
+
+    private void OnCycleTileBackwards(InputAction.CallbackContext context)
+    {
+        CycleBlockBackwards();
+    }
+
+    private void OnPlaceBlock(InputAction.CallbackContext context)
+    {
+        SetTile();
+    }
+
+    private void OnSaveLevel(InputAction.CallbackContext context)
+    {
+        SaveLevel();
+    }
+
+    private void OnMinimize(InputAction.CallbackContext context)
+    {
+        ToggleMinimize();
     }
 }
